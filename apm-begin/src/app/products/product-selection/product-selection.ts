@@ -1,24 +1,29 @@
-import { Component, computed, effect, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ProductData } from '../product-data';
 import { Product } from '../product';
 import { CurrencyPipe } from '@angular/common';
+import { ProductService } from '../product.service';
+import { ReviewList } from '../../reviews/review-list/review-list';
 
 @Component({
   selector: 'app-product-selection',
-  imports: [FormsModule, CurrencyPipe],
+  imports: [FormsModule, CurrencyPipe, ReviewList],
   templateUrl: './product-selection.html',
   styleUrl: './product-selection.css',
 })
 export class ProductSelection {
   pageTitle = 'Product Selection';
+  private productService = inject(ProductService);
 
-  selectedProduct = signal<Product | undefined>(undefined);
+  selectedProduct = this.productService.selectedProduct; //this is referring the signal not reading
   quantity = linkedSignal({
     source: this.selectedProduct,
     computation: (p) => 1,
   });
-  products = signal(ProductData.products);
+  products = this.productService.productsResource.value;
+  isLoading = this.productService.productsResource.isLoading;
+  error = this.productService.productsResource.error;
+  errorMessage = computed(() => (this.error() ? this.error()?.message : ''));
   total = computed(() => (this.selectedProduct()?.price ?? 0) * this.quantity());
   color = computed(() => (this.total() > 200 ? 'green' : 'blue'));
   onIncrease() {
